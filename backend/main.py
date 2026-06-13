@@ -1,11 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import interview, code_explain, resume
+from routes import interview, code_explain
 
 try:
     from routes import leetcode
 except ImportError:  # pragma: no cover - defensive import
     leetcode = None
+
+try:
+    from routes import resume
+except ImportError:  # pragma: no cover - defensive import
+    resume = None
 
 app = FastAPI(title="TechPrep AI Backend", description="API for TechPrep AI using Gemini API")
 
@@ -20,7 +25,9 @@ app.add_middleware(
 
 app.include_router(interview.router)
 app.include_router(code_explain.router)
-app.include_router(resume.router)
+
+if resume is not None:
+    app.include_router(resume.router)
 
 if leetcode is not None:
     app.include_router(leetcode.router)
