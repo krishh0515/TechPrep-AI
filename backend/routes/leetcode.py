@@ -5,7 +5,6 @@ router = APIRouter(prefix="/leetcode", tags=["LeetCode"])
 
 
 LEETCODE_GRAPHQL = "https://leetcode.com/graphql"
-PUBLIC_STATS_FALLBACK = "https://leetcode-stats-api.herokuapp.com"
 
 
 def _get_from_leetcode_graphql(username: str):
@@ -29,7 +28,11 @@ def _get_from_leetcode_graphql(username: str):
   }
   """
   payload = {"query": query, "variables": {"username": username}}
-  headers = {"Content-Type": "application/json", "Referer": "https://leetcode.com"}
+  headers = {
+    "Content-Type": "application/json",
+    "Referer": "https://leetcode.com",
+    "User-Agent": "Mozilla/5.0",
+  }
 
   resp = requests.post(LEETCODE_GRAPHQL, json=payload, headers=headers, timeout=10)
   if resp.status_code != 200:
@@ -41,12 +44,11 @@ def _get_from_leetcode_graphql(username: str):
     raise HTTPException(status_code=502, detail="Invalid response from LeetCode GraphQL") from exc
 
   if body.get("errors"):
-    # Keep it user-friendly.
-    raise HTTPException(status_code=404, detail="LeetCode username not found (GraphQL).")
+    raise HTTPException(status_code=404, detail="LeetCode username not found or profile is not public.")
 
   matched = (body.get("data") or {}).get("matchedUser")
   if not matched:
-    raise HTTPException(status_code=404, detail="LeetCode username not found.")
+    raise HTTPException(status_code=404, detail="LeetCode username not found or profile is not public.")
 
   ac = (((matched.get("submitStats") or {}).get("acSubmissionNum")) or [])
   counts = {str(x.get("difficulty", "")).lower(): x.get("count", 0) for x in ac if isinstance(x, dict)}
@@ -62,37 +64,13 @@ def _get_from_leetcode_graphql(username: str):
     "contributionPoints": (matched.get("contributions") or {}).get("points"),
   }
 
-
-def _get_from_public_fallback(username: str):
-  url = f"{PUBLIC_STATS_FALLBACK}/{username}"
-  resp = requests.get(url, timeout=8)
-  if resp.status_code != 200:
-    raise HTTPException(status_code=404, detail="LeetCode username not found.")
-  try:
-    data = resp.json()
-  except ValueError as exc:
-    raise HTTPException(status_code=502, detail="Invalid response from stats service") from exc
-
-  return {
-    "username": username,
-    "totalSolved": data.get("totalSolved", 0),
-    "easySolved": data.get("easySolved", 0),
-    "mediumSolved": data.get("mediumSolved", 0),
-    "hardSolved": data.get("hardSolved", 0),
-    "ranking": data.get("ranking"),
-    "acceptanceRate": data.get("acceptanceRate"),
-    "contributionPoints": data.get("contributionPoints"),
-  }
-
-
 @router.get("/stats/{username}")
 def get_leetcode_stats(username: str):
   """
   Safe LeetCode stats proxy.
 
   Uses LeetCode public GraphQL (no auth, no cookies) to fetch high-level stats
-  for the given username. If LeetCode GraphQL fails due to rate limits / edge
-  cases, we fall back to a public community stats API.
+  for the given username.
 
   We do NOT store any LeetCode credentials.
   """
@@ -102,12 +80,15 @@ def get_leetcode_stats(username: str):
   try:
     return _get_from_leetcode_graphql(username)
   except HTTPException as exc:
-    # If username is genuinely not found, return that directly.
-    if exc.status_code == 404:
-      raise
-    # Otherwise, try fallback.
-    return _get_from_public_fallback(username)
-  except Exception:
-    # Fallback for unexpected issues.
-    return _get_from_public_fallback(username)
+    raise exc
+  except requests.RequestException as exc:
+    raise HTTPException(
+      status_code=502,
+      detail="LeetCode stats are temporarily unavailable. Try again later or verify the username is public.",
+    ) from exc
+  except Exception as exc:
+    raise HTTPException(
+      status_code=502,
+      detail="LeetCode stats are temporarily unavailable. Try again later or verify the username is public.",
+    ) from exc
 
