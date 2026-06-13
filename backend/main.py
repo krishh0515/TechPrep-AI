@@ -17,7 +17,10 @@ app = FastAPI(title="TechPrep AI Backend", description="API for TechPrep AI usin
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, this should be restricted
+    allow_origins=[
+        "https://tech-prep-ai-pi.vercel.app",
+        "http://localhost:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
