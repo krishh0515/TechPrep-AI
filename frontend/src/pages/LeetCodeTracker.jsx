@@ -132,6 +132,35 @@ const LeetCodeTracker = () => {
   const diffMeta = (d) => DIFFICULTIES.find((x) => x.value === d) || DIFFICULTIES[1];
   const statusMeta = (s) => STATUSES.find((x) => x.value === s) || STATUSES[0];
 
+  const solvedBreakdown = [
+    { label: 'Easy', value: remoteStats?.easySolved ?? stats.easy, color: '#34d399' },
+    { label: 'Medium', value: remoteStats?.mediumSolved ?? stats.medium, color: '#fbbf24' },
+    { label: 'Hard', value: remoteStats?.hardSolved ?? stats.hard, color: '#fb7185' },
+  ];
+  const solvedTotal = solvedBreakdown.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  const pieStyle =
+    solvedTotal > 0
+      ? {
+          background: `conic-gradient(${solvedBreakdown
+            .map((item, index) => {
+              const start =
+                (solvedBreakdown
+                  .slice(0, index)
+                  .reduce((sum, current) => sum + Number(current.value || 0), 0) /
+                  solvedTotal) *
+                100;
+              const end =
+                ((solvedBreakdown
+                  .slice(0, index + 1)
+                  .reduce((sum, current) => sum + Number(current.value || 0), 0) /
+                  solvedTotal) *
+                  100);
+              return `${item.color} ${start}% ${end}%`;
+            })
+            .join(', ')})`,
+        }
+      : { background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))' };
+
   const fetchRemoteStats = async () => {
     const username = lcUsername.trim();
     if (!username) {
@@ -174,53 +203,94 @@ const LeetCodeTracker = () => {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-2 sm:grid-cols-5 gap-4"
+        className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]"
       >
-        <div className="glass-card p-4 rounded-2xl flex items-center gap-3">
-          <BarChart3 className="w-6 h-6 text-amber-400" />
-          <div>
-            <p className="text-text-secondary text-xs font-semibold uppercase">
-              Total solved (LeetCode)
-            </p>
-            <p className="text-xl font-black text-white">
-              {remoteStats?.totalSolved ?? '—'}
-            </p>
+        <div className="glass-card p-4 rounded-2xl flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-text-secondary text-xs font-semibold uppercase">
+                Solved breakdown
+              </p>
+              <p className="text-sm text-white/60">Easy, medium, hard</p>
+            </div>
+            <BarChart3 className="w-5 h-5 text-amber-400" />
+          </div>
+
+          <div className="flex items-center justify-center">
+            <div
+              className="relative w-28 h-28 rounded-full"
+              style={pieStyle}
+              aria-label="LeetCode solved breakdown pie chart"
+            >
+              <div className="absolute inset-3 rounded-full bg-slate-950/95 border border-white/5 flex flex-col items-center justify-center text-center">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-text-secondary font-semibold">
+                  Solved
+                </span>
+                <span className="text-lg font-black text-white leading-none">{solvedTotal}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2 text-xs font-medium text-text-secondary">
+            {solvedBreakdown.map((item) => (
+              <div key={item.label} className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                  {item.label}
+                </span>
+                <span className="text-white">{item.value}</span>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="glass-card p-4 rounded-2xl flex items-center gap-3">
-          <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-          <div>
-            <p className="text-text-secondary text-xs font-semibold uppercase">
-              Solved in tracker
-            </p>
-            <p className="text-xl font-black text-white">{stats.done}</p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="glass-card p-4 rounded-2xl flex items-center gap-3">
+            <BarChart3 className="w-6 h-6 text-amber-400" />
+            <div>
+              <p className="text-text-secondary text-xs font-semibold uppercase">
+                Total solved (LeetCode)
+              </p>
+              <p className="text-xl font-black text-white">
+                {remoteStats?.totalSolved ?? '—'}
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="glass-card p-4 rounded-2xl flex items-center gap-3">
-          <span className="w-3 h-3 rounded-full bg-emerald-400" />
-          <div>
-            <p className="text-text-secondary text-xs font-semibold uppercase">Easy</p>
-            <p className="text-xl font-black text-white">
-              {remoteStats?.easySolved ?? stats.easy}
-            </p>
+          <div className="glass-card p-4 rounded-2xl flex items-center gap-3">
+            <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+            <div>
+              <p className="text-text-secondary text-xs font-semibold uppercase">
+                Solved in tracker
+              </p>
+              <p className="text-xl font-black text-white">{stats.done}</p>
+            </div>
           </div>
-        </div>
-        <div className="glass-card p-4 rounded-2xl flex items-center gap-3">
-          <span className="w-3 h-3 rounded-full bg-amber-400" />
-          <div>
-            <p className="text-text-secondary text-xs font-semibold uppercase">Medium</p>
-            <p className="text-xl font-black text-white">
-              {remoteStats?.mediumSolved ?? stats.medium}
-            </p>
+          <div className="glass-card p-4 rounded-2xl flex items-center gap-3">
+            <span className="w-3 h-3 rounded-full bg-emerald-400" />
+            <div>
+              <p className="text-text-secondary text-xs font-semibold uppercase">Easy</p>
+              <p className="text-xl font-black text-white">
+                {remoteStats?.easySolved ?? stats.easy}
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="glass-card p-4 rounded-2xl flex items-center gap-3">
-          <span className="w-3 h-3 rounded-full bg-rose-400" />
-          <div>
-            <p className="text-text-secondary text-xs font-semibold uppercase">Hard</p>
-            <p className="text-xl font-black text-white">
-              {remoteStats?.hardSolved ?? stats.hard}
-            </p>
+          <div className="glass-card p-4 rounded-2xl flex items-center gap-3">
+            <span className="w-3 h-3 rounded-full bg-amber-400" />
+            <div>
+              <p className="text-text-secondary text-xs font-semibold uppercase">Medium</p>
+              <p className="text-xl font-black text-white">
+                {remoteStats?.mediumSolved ?? stats.medium}
+              </p>
+            </div>
+          </div>
+          <div className="glass-card p-4 rounded-2xl flex items-center gap-3">
+            <span className="w-3 h-3 rounded-full bg-rose-400" />
+            <div>
+              <p className="text-text-secondary text-xs font-semibold uppercase">Hard</p>
+              <p className="text-xl font-black text-white">
+                {remoteStats?.hardSolved ?? stats.hard}
+              </p>
+            </div>
           </div>
         </div>
       </motion.div>
