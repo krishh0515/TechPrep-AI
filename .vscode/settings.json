@@ -1,0 +1,9 @@
+{
+    "python.terminal.activateEnvironment": true,
+    "python.defaultInterpreterPath": "${workspaceFolder}\\backend\\venv\\Scripts\\python.exe",
+    "python.languageServer": "None",
+    "python.analysis.indexing": false,
+    "python.analysis.typeCheckingMode": "off",
+    "python-envs.pythonProjects": [],
+    "cursorpyright.analysis.typeCheckingMode": "off"
+}

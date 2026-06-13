@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-50: oklch(0.97 0.01 240);
+  --color-primary-100: oklch(0.93 0.03 240);
+  --color-primary-500: oklch(0.65 0.2 250);
+  --color-primary-600: oklch(0.55 0.22 260);
+  
+  --color-background: oklch(0.12 0.02 240);
+  --color-surface: oklch(0.18 0.03 240);
+  --color-surface-hover: oklch(0.25 0.04 240);
+  
+  --color-text-primary: oklch(0.98 0.01 240);
+  --color-text-secondary: oklch(0.7 0.02 240);
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--color-background)] text-[var(--color-text-primary)] antialiased min-h-screen selection:bg-primary-500/30 selection:text-white;
+    background-image: 
+      radial-gradient(at 0% 0%, oklch(0.2 0.05 260 / 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, oklch(0.3 0.1 280 / 0.1) 0px, transparent 50%);
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-surface/40 backdrop-blur-2xl border border-white/10 shadow-2xl;
+  }
+  .glass-card {
+    @apply bg-surface/20 backdrop-blur-lg border border-white/5 shadow-xl hover:border-primary-500/40 transition-all duration-500;
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-white via-primary-100 to-primary-500;
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
